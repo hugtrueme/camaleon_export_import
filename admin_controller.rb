@@ -46,7 +46,15 @@ class Plugins::ExportContent::AdminController < CamaleonCms::Apps::PluginsAdminC
       when 'load_json'
         render json: load_file_content_to_db(params[:filter][:json_file], params[:filter])
       when 'preview'
-        params[:url] = Rails.public_path.join(params[:url].sub(current_site.the_url, '')).to_s if params[:url].include?(current_site.the_url) # local file
+        params[:url] = if params[:url].include?(current_site.the_url) # local file
+                         params[:url].sub(current_site.the_url, '')
+                       else
+                         # The params[:url] will probably be '/media/1/a.json',
+                         # without current_site.get_url but initial with a slash.
+                         params[:url].gsub(/^\//,'')
+                       end
+
+        params[:url] = Rails.public_path.join(params[:url]).to_s
         file = cama_tmp_upload(params[:url])
         res = load_file_content_preview(file[:file_path])
         res[:json_file] = file[:file_path]
